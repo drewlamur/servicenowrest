@@ -2,6 +2,7 @@
 
 var request = require('request');
 var querystring = require('querystring');
+var validator = require('validator');
 
 /**
  * @typedef ClientConfig
@@ -33,12 +34,25 @@ function Client(config) {
     
     this.config = config;
 
-    this.request = request.defaults({
-        auth: {
+    var creds;
+
+    if (validator.isBase64(config.username) && validator.isBase64(config.password)) {
+        creds = {
+            user: Buffer.from(config.username, 'base64').toString('ascii'),
+            pass: Buffer.from(config.password, 'base64').toString('ascii'),
+            sendImmediately: true
+        }
+    } else {
+        creds = {
             user: config.username,
             pass: config.password,
             sendImmediately: true
-        },
+        }
+        
+    }
+
+    this.request = request.defaults({
+        auth: creds,
         headers: {
             "Content-Type": "application/json"
         }
